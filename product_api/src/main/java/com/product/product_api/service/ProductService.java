@@ -2,73 +2,83 @@ package com.product.product_api.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.product.product_api.entity.Product;
 import com.product.product_api.repository.ProductRepository;
 import com.product.product_api.service.business_exception.BadRequestException;
-
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
-
+import com.product.product_api.service.business_exception.NotFoundException;
 
 @Service
 public class ProductService {
 
-    private final Validator validator;
+    private final ValidationDataProduct dataProduct;
+    private final ProductRepository repository;
+    private final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
-    public ProductService() {
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        this.validator = factory.getValidator();
+    public ProductService(ValidationDataProduct dataProduct, ProductRepository repository) {
+        this.dataProduct = dataProduct;
+        this.repository = repository;
     }
 
-    @Autowired
-    private ProductRepository repository;
-
-    public List<Product> findAllProduct(){
-        return repository.findAll();
+    /**
+     * @return returns a list of products saved in the db.
+     * @throws NotFoundException If the list returns empty throws an exception along
+     *                           with a logger.
+     */
+    public List<Product> findAllProduct() throws NotFoundException {
+        List<Product> products = repository.findAll();
+        if (products.isEmpty()) {
+            logger.info("No products found");
+            throw new NotFoundException("Product list not found");
+        }
+        return products;
     }
 
-    public Optional<Product> findProduct(UUID uuid){
+    /**
+     * 
+     * @param uuid UUID parameter for specific product location.
+     * @return Only returns the search for the product passed by UUID if it exists in the db.
+     * @throws NotFoundException If the UUID passed by the user does not exist in the DB, the exception will be thrown.
+     */
+    public Optional<Product> findProduct(UUID uuid) throws NotFoundException {
+
+        Optional<Product> optProduct = repository.findById(uuid);
+        if (optProduct.isEmpty()) {
+            logger.info("No products found");
+            throw new NotFoundException("No products found");
+        }
         return repository.findById(uuid);
     }
 
-    public Product createProduct(Product product){
-
-        validationDataProduct(product);
+    public Product createProduct(Product product) throws BadRequestException {
+        dataProduct.validation(product);
         return repository.save(product);
     }
 
-    public Product updateProduct(UUID uuid, Product product){
-        Optional<Product> opt = repository.findById(uuid);
-        if(opt.isEmpty()){
-            throw new RuntimeException("Product not found");
+    public Product updateProduct(UUID uuid, Product product) throws BadRequestException {
+
+        Optional<Product> optProduct = repository.findById(uuid);
+        if (optProduct.isEmpty()) {
+            logger.info("No products found");
+            throw new NotFoundException("Product not found");
         }
-        validationDataProduct(product);
+        dataProduct.validation(product);
         return repository.save(product);
     }
 
-    public void deleteProduct(UUID uuid){
+    public void deleteProduct(UUID uuid) throws NotFoundException {
+
+        Optional<Product> optProduct = repository.findById(uuid);
+        if (optProduct.isEmpty()) {
+            logger.info("No products found");
+            throw new NotFoundException("Product not found");
+        }
         repository.deleteById(uuid);
     }
 
-    //Considere criar uma abstração para essa classe
-    // Method for validating data from the controller
-    public void validationDataProduct(Product product){
-        Set<ConstraintViolation<Product>> violations = validator.validate(product);
-        if(!violations.isEmpty() || violations == null){
-            StringBuilder sb = new StringBuilder();
-            for (ConstraintViolation<Product> violation : violations){
-                sb.append(violation.getMessage()).append(" \n ");
-            }
-            throw new BadRequestException(sb.toString());
-        }
-    }
-    
 }

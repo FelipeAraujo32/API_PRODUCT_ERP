@@ -20,38 +20,41 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.product.product_api.dto.ProductDTO;
 import com.product.product_api.service.ProductService;
+import com.product.product_api.service.business_exception.BadRequestException;
+import com.product.product_api.service.business_exception.NotFoundException;
 
-
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/products")
+@Tag(name = "Product COntroller", description = "ERP system product controller")
 public class ProductController {
 
-    @Autowired 
+    @Autowired
     private ProductService service;
 
-    @GetMapping("/products")
-    public ResponseEntity<List<ProductDTO>> findAllProducts(){
+    @GetMapping()
+    public ResponseEntity<List<ProductDTO>> findAllProducts() throws NotFoundException {
 
-    var ProductDTO = service.findAllProduct().stream()
+        var ProductDTO = service.findAllProduct().stream()
                 .map(ProductDTO::new)
                 .collect(Collectors.toList());
-    return ResponseEntity.ok(ProductDTO);
+        return ResponseEntity.ok(ProductDTO);
     }
-    
+
     @GetMapping("/{uuid}")
-    public ResponseEntity<ProductDTO> findProduct(@PathVariable UUID uuid){
-        
+    public ResponseEntity<ProductDTO> findProduct(@PathVariable UUID uuid) throws NotFoundException {
+
         var findProduct = service.findProduct(uuid);
         return ResponseEntity.ok(new ProductDTO(findProduct));
     }
 
-    @PostMapping("/products")
-    public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody ProductDTO productDTO){
+    @PostMapping()
+    public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody ProductDTO productDTO)
+            throws BadRequestException {
 
         var createProduct = service.createProduct(productDTO.toProduct());
-
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{uuid}")
                 .buildAndExpand(createProduct.getUuid())
@@ -61,7 +64,8 @@ public class ProductController {
     }
 
     @PutMapping("/{uuid}")
-    public ResponseEntity<ProductDTO> updateProduct(@PathVariable UUID uuid, @Valid @RequestBody ProductDTO productDTO){
+    public ResponseEntity<ProductDTO> updateProduct(@PathVariable UUID uuid,
+            @Valid @RequestBody ProductDTO productDTO) throws BadRequestException {
 
         var updateProduct = service.updateProduct(uuid, productDTO.toProduct());
 
@@ -69,7 +73,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{uuid}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable UUID uuid){
+    public ResponseEntity<Void> deleteProduct(@PathVariable UUID uuid) throws NotFoundException {
         service.deleteProduct(uuid);
         return ResponseEntity.noContent().build();
     }
