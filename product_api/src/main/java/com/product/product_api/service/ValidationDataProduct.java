@@ -5,7 +5,7 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 import com.product.product_api.entity.Product;
-import com.product.product_api.service.business_exception.BadRequestException;
+import com.product.product_api.service.business_exception.BusinessException;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -23,7 +23,7 @@ public class ValidationDataProduct {
     }
     
     // Method for validating data from the controller
-    public void validation(Product product) throws BadRequestException{
+    public void validation(Product product) throws BusinessException{
         Set<ConstraintViolation<Product>> stringValidations = validator.validate(product);
         
         if(!stringValidations.isEmpty()){
@@ -31,7 +31,7 @@ public class ValidationDataProduct {
             for (ConstraintViolation<Product> validations : stringValidations){
                 sb.append(validations.getMessage()).append(" \n");
             }
-            throw new BadRequestException(sb.toString());
+            throw new BusinessException(sb.toString());
         }
     }
 }

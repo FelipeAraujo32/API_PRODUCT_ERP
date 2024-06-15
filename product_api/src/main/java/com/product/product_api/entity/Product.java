@@ -18,7 +18,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 public class Product {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID uuid;
 
     @Column(name = "name_prodocut" ,nullable = false)
