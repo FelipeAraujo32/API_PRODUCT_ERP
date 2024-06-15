@@ -13,10 +13,10 @@ import com.product.product_api.service.business_exception.NotFoundException;
 @Service
 public class ProductService {
 
-    private final ValidationDataProduct dataProduct;
+    private final ValidationDataService dataProduct;
     private final ProductRepository repository;
 
-    public ProductService(ValidationDataProduct dataProduct, ProductRepository repository) {
+    public ProductService(ValidationDataService dataProduct, ProductRepository repository) {
         this.dataProduct = dataProduct;
         this.repository = repository;
     }

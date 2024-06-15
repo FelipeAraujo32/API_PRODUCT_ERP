@@ -13,11 +13,11 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
 @Component
-public class ValidationDataProduct {
+public class ValidationDataService {
 
     private final Validator validator;
 
-    public ValidationDataProduct() {
+    public ValidationDataService() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         this.validator = factory.getValidator();
     }
