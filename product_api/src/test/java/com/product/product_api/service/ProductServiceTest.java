@@ -119,12 +119,11 @@ public class ProductServiceTest {
 
         when(repository.findById(product.getUuid())).thenReturn(Optional.empty());
 
-        NoSuchElementException exception = Assertions.assertThrows(NoSuchElementException.class,
+        assertThrows(NoSuchElementException.class,
                 () -> service.deleteProduct(product.getUuid()));
 
-        Assertions.assertEquals(exception, exception);
-
         verify(repository, times(1)).findById(product.getUuid());
+        verify(repository, times(0)).delete(product);
     }
 
     @Test
@@ -137,6 +136,7 @@ public class ProductServiceTest {
         repository.delete(product);
 
         Optional<Product> productAfter = repository.findById(product.getUuid());
+
         assertFalse(productAfter.isPresent());
     }
 
@@ -146,8 +146,9 @@ public class ProductServiceTest {
 
         when(repository.findAll()).thenReturn(List.of(product));
 
-        service.findAllProduct();
+        List<Product> result = service.findAllProduct();
 
+        assertNotNull(result);
         verify(repository).findAll();
     }
 
@@ -164,12 +165,119 @@ public class ProductServiceTest {
     }
 
     @Test
-    void testFindById() {
+    @DisplayName("If successful, returns the specific product passed by uuid")
+    void testFindByIdCase1() {
+
+        when(repository.findById(product.getUuid())).thenReturn(Optional.of(product));
+
+        Product result = service.findById(product.getUuid());
+
+        assertNotNull(result);
+        assertEquals(product, result);
+
+        verify(repository, times(1)).findById(product.getUuid());
+    }
+
+    @Test
+    @DisplayName("Exception case if uuid is not found")
+    void testFindByIdCase2() {
+
+        when(repository.findById(product.getUuid())).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class,
+                () -> service.findById(product.getUuid()));
+
+        verify(repository, times(1)).findById(product.getUuid());
+    }
+
+    @Test
+    @DisplayName("Success case saves the non-bank product if everything is ok")
+    void testUpdateProductCase1() {
+
+        when(repository.findById(product.getUuid())).thenReturn(Optional.of(product));
+
+        doNothing().when(validationService).validation(product);
+
+        when(repository.save(product)).thenReturn(product);
+
+        Product result = service.updateProduct(product.getUuid(), product);
+
+        verify(repository, times(1)).findById(product.getUuid());
+        verify(validationService, times(1)).validation(product);
+        verify(repository, times(1)).save(product);
+
+        assertNotNull(result);
+        assertEquals(product, result);
+    }
+
+    @Test
+    @DisplayName("If the product UUID does not exist, an exception is returned")
+    void testUpdateProductCase2() {
+
+        when(repository.findById(product.getUuid())).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class,
+                () -> service.updateProduct(product.getUuid(), product));
+
+        verify(repository, times(1)).findById(product.getUuid());
+        verify(validationService, times(1)).validation(product);
+        verify(repository, times(0)).save(product);
 
     }
 
     @Test
-    void testUpdateProduct() {
+    @DisplayName("If the UUID returning from the bank is different from the UUID passed by the customer, an exception is returned")
+    void testUpdateProductCase3() {
 
+        Product product_1 = new Product("Heloisa", "Araujo", 90, 60);
+        product_1.setUuid(UUID.randomUUID());
+
+        when(repository.findById(product.getUuid())).thenReturn(Optional.of(product_1));
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> service.updateProduct(product.getUuid(), product));
+
+        assertEquals("The UUID must be the same as the one you want to update", exception.getMessage());
+
+        verify(repository, times(1)).findById(product.getUuid());
+        verify(repository, times(0)).save(product);
+
+    }
+
+    @Test
+    @DisplayName("Case of returning an exception if the data passed is incorrect")
+    void testUpdateProductCase4() {
+
+        when(repository.findById(product.getUuid())).thenReturn(Optional.of(product));
+
+        doThrow(new BusinessException(toString())).when(validationService).validation(product);
+
+        BusinessException exception = Assertions.assertThrows(BusinessException.class,
+                () -> service.updateProduct(product.getUuid(), product));
+
+        assertEquals(toString(), exception.getMessage());
+
+        verify(repository, times(1)).findById(product.getUuid());
+        verify(validationService, times(1)).validation(product);
+        verify(repository, times(0)).delete(product);
+
+    }
+
+    @Test
+    @DisplayName("Validation Service behavior if there is a Repository Exception")
+    void testUpdateProductCase5() {
+
+        when(repository.findById(product.getUuid())).thenReturn(Optional.of(product));
+        doNothing().when(validationService).validation(product);
+
+        when(repository.save(product)).thenThrow(new RuntimeException("Database connection failed"));
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            service.updateProduct(product.getUuid(), product);
+        });
+        assertEquals("Database connection failed", exception.getMessage());
+
+        verify(validationService, times(1)).validation(product);
+        verify(repository, times(1)).save(product);
     }
 }
