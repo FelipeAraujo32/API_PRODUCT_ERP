@@ -1,5 +1,6 @@
 package com.product.product_api.entity;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -15,11 +16,11 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 @Entity(name = "product")
 @Table(name = "product_erp")
-public class Product {
+public class ProductModel {
     
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID uuid;
+    private UUID productId;
 
     @Column(name = "name_prodocut" ,nullable = false)
     @NotNull(message = "Name cannot be Null")
@@ -34,30 +35,26 @@ public class Product {
     @Column(nullable = false)
     @NotNull(message = "Price cannot be Null")
     @Positive(message = "The price cannot be zero")
-    private double price;
+    private BigDecimal price;
     
     @Column(nullable = false)
     @PositiveOrZero(message = "Stock cannot be negative")
     private Integer stock;
     
-    public Product() {
+    public ProductModel() {
     }
 
-    public Product(String name, String description, double price, int stock) {
+    public ProductModel(String name, String description, BigDecimal price, int stock) {
         this.name = name;
         this.description = description;
         this.price = price;
         this.stock = stock;
     }
 
-    public UUID getUuid() {
-        return uuid;
+    public ProductModel(String name, String description, double price, int stock) {
+        this(name, description, BigDecimal.valueOf(price), stock);
     }
-
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
-    }
-
+    
     public String getName() {
         return name;
     }
@@ -74,11 +71,11 @@ public class Product {
         this.description = description;
     }
 
-    public double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 
@@ -90,6 +87,15 @@ public class Product {
         this.stock = stock;
     }
 
-    
-    
+    public UUID getProductId() {
+        return productId;
+    }
+
+    public void setProductId(UUID productId) {
+        this.productId = productId;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
 }
