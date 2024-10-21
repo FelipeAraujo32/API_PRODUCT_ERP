@@ -6,86 +6,75 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.product.product_api.entity.Product;
+import com.product.product_api.convert.ProductModelConvert;
+import com.product.product_api.dto.ProductModelDto;
+import com.product.product_api.entity.ProductModel;
+import com.product.product_api.messaging.producer.InventoryProducer;
 import com.product.product_api.repository.ProductRepository;
 import com.product.product_api.service.business_exception.NotFoundException;
 
 @Service
 public class ProductService {
 
-    private final ValidationDataService dataProduct;
-    private final ProductRepository repository;
+    private final ValidationDataService validationDataService;
+    private final ProductRepository productRepository;
+    private final InventoryProducer inventoryProducer;
+    private final ProductModelConvert productModelConvert;
 
-    public ProductService(ValidationDataService dataProduct, ProductRepository repository) {
-        this.dataProduct = dataProduct;
-        this.repository = repository;
+    public ProductService(ValidationDataService validationDataService, ProductRepository productRepository,
+            InventoryProducer inventoryProducer, ProductModelConvert productModelConvert) {
+        this.validationDataService = validationDataService;
+        this.productRepository = productRepository;
+        this.inventoryProducer = inventoryProducer;
+        this.productModelConvert = productModelConvert;
     }
 
-    /**
-     * @return returns a list of products saved in the db.
-     * @throws NotFoundException If the list returns empty throws an exception
-     *                           along.
-     */
-    public List<Product> findAllProduct() throws NotFoundException {
-        var products = repository.findAll();
-        if (products.isEmpty()) {
+    public List<ProductModelDto> findAllProduct() throws NotFoundException {
+        List<ProductModel> allProducts = productRepository.findAll();
+        if (allProducts.isEmpty()) {
             throw new NotFoundException("Products list not found");
         }
-        return products;
+        return productModelConvert.toProductDTOList(allProducts);
     }
 
-    /**
-     * 
-     * @param uuid UUID parameter for specific product location.
-     * @return Only returns the search for the product passed by UUID if it exists
-     *         in the db.
-     * @throws NoSuchElementException Returns the exception if it doesn't find the
-     *                                correct element
-     */
-    public Product findById(UUID uuid) {
-        return repository.findById(uuid).orElseThrow(NoSuchElementException::new);
+    public ProductModelDto findByProduct(UUID uuid) {
+        ProductModel findByProduct = productRepository.findById(uuid).orElseThrow(NoSuchElementException::new);
+        return productModelConvert.toProductDTO(findByProduct);
     }
 
-    /**
-     * 
-     * @param product Receives the product object passed by the client to create and
-     *                persist the product in the DB.
-     * @return Returns the product created and saved in the DB if everything is ok.
-     */
-    public Product createProduct(Product product) {
-        // Validator setting in an external class
-        dataProduct.validation(product);
-        return repository.save(product);
+    public ProductModelDto createProduct(ProductModelDto productDTO) {
+        ProductModel productModel = productModelConvert.toProductModel(productDTO);
+        validationDataService.validation(productModel);
+        ProductModel createdProduct = productRepository.save(productModel);
+        inventoryProducer.createProduct(createdProduct);
+        return productModelConvert.toProductDTO(createdProduct);
     }
 
-    /**
-     * 
-     * @param uuid    receives the uuid parameter to search the database to check if
-     *                it exists in the db.
-     * @param product If found in the db, it updates the db with the data passed by
-     *                the client.
-     * @return If the operation is successful, the product is returned.
-     */
-    public Product updateProduct(UUID uuid, Product product) {
+    public ProductModelDto updateProduct(UUID productId, ProductModelDto productDTO) {
+        ProductModel productModel = productModelConvert.toProductModel(productDTO);
+        ProductModel findByProductId = findByProductId(productId);
+        checkCorrespondingUIDD(findByProductId, productId);
+        validationDataService.validation(productModel);
+        productModel.setProductId(productId);
+        ProductModel updateProduct = productRepository.save(productModel);
+        inventoryProducer.updateProduct(updateProduct);
+        return productModelConvert.toProductDTO(updateProduct);
+    }
 
-        Product productDb = this.findById(uuid);
-        if (!productDb.getUuid().equals(uuid)) {
+    private ProductModel findByProductId(UUID productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(
+                        () -> new NotFoundException("Product with productId " + productId + " not found."));
+    }
+
+    private void checkCorrespondingUIDD(ProductModel findByProductId, UUID productId) {
+        if (!findByProductId.getProductId().equals(productId)) {
             throw new NotFoundException("The UUID must be the same as the one you want to update");
         }
-        // Validator setting in an external class
-        dataProduct.validation(product);
-        product.setUuid(uuid);
-        return repository.save(product);
     }
 
-    /**
-     * 
-     * @param uuid receives the uuid parameter to search the database to check if
-     *             it exists in the db.
-     */
     public void deleteProduct(UUID uuid) {
-        Product productDb = this.findById(uuid);
-        this.repository.delete(productDb);
+        productRepository.deleteById(uuid);
+        inventoryProducer.deleteProduct(uuid);
     }
-
 }

@@ -4,7 +4,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
-import com.product.product_api.entity.Product;
+import com.product.product_api.entity.ProductModel;
 import com.product.product_api.service.business_exception.BusinessException;
 
 import jakarta.validation.ConstraintViolation;
@@ -22,13 +22,12 @@ public class ValidationDataService {
         this.validator = factory.getValidator();
     }
     
-    // Method for validating data from the controller
-    public void validation(Product product) throws BusinessException{
-        Set<ConstraintViolation<Product>> stringValidations = validator.validate(product);
+    public void validation(ProductModel product) throws BusinessException{
+        Set<ConstraintViolation<ProductModel>> stringValidations = validator.validate(product);
         
         if(!stringValidations.isEmpty()){
             StringBuilder sb = new StringBuilder();
-            for (ConstraintViolation<Product> validations : stringValidations){
+            for (ConstraintViolation<ProductModel> validations : stringValidations){
                 sb.append(validations.getMessage()).append(" \n");
             }
             throw new BusinessException(sb.toString());
