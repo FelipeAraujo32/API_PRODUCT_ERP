@@ -12,7 +12,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 
 @Entity(name = "product")
 @Table(name = "product_erp")
@@ -37,22 +36,17 @@ public class ProductModel {
     @Positive(message = "The price cannot be zero")
     private BigDecimal price;
     
-    @Column(nullable = false)
-    @PositiveOrZero(message = "Stock cannot be negative")
-    private Integer stock;
-    
     public ProductModel() {
     }
 
-    public ProductModel(String name, String description, BigDecimal price, int stock) {
+    public ProductModel(String name, String description, BigDecimal price) {
         this.name = name;
         this.description = description;
         this.price = price;
-        this.stock = stock;
     }
 
     public ProductModel(String name, String description, double price, int stock) {
-        this(name, description, BigDecimal.valueOf(price), stock);
+        this(name, description, BigDecimal.valueOf(price));
     }
     
     public String getName() {
@@ -79,14 +73,6 @@ public class ProductModel {
         this.price = price;
     }
 
-    public int getStock() {
-        return stock;
-    }
-
-    public void setStock(int stock) {
-        this.stock = stock;
-    }
-
     public UUID getProductId() {
         return productId;
     }
@@ -95,7 +81,4 @@ public class ProductModel {
         this.productId = productId;
     }
 
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
 }

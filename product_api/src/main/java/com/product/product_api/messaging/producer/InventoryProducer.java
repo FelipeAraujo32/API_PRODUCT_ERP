@@ -6,6 +6,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 import com.product.product_api.convert.ProductEventConvert;
+import com.product.product_api.dto.ProductModelDto;
 import com.product.product_api.entity.ProductModel;
 
 @Component
@@ -19,18 +20,18 @@ public class InventoryProducer {
         this.productEventConvert = productEventConvert;
     }
 
-    public void createProduct(ProductModel productModel) {
+    public void createProduct(ProductModel productModel, ProductModelDto productModelDto) {
         rabbitTemplate.convertAndSend(
                 "product.exchange",
                 "product.created",
-                productEventConvert.toProductEventDTO(productModel));
+                productEventConvert.toProductEventDTO(productModel, productModelDto));
     }
 
-    public void updateProduct(ProductModel productModel) {
+    public void updateProduct(ProductModel productModel, ProductModelDto productModelDto) {
         rabbitTemplate.convertAndSend(
                 "product.exchange",
                 "product.updated",
-                productEventConvert.toProductEventDTO(productModel));
+                productEventConvert.toProductEventDTO(productModel, productModelDto));
     }
 
     public void deleteProduct(UUID productId) {

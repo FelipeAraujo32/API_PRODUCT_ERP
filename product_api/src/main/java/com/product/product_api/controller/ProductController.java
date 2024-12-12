@@ -17,8 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.product.product_api.dto.ProductModelDto;
-import com.product.product_api.service.ProductService;
 import com.product.product_api.service.business_exception.NotFoundException;
+import com.product.product_api.service.productservice.ProductService;
+import com.product.product_api.service.productservice.ProductServiceCreated;
+import com.product.product_api.service.productservice.ProductServiceUpdate;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,9 +34,14 @@ import jakarta.validation.Valid;
 public class ProductController {
 
         private final ProductService productService;
+        private final ProductServiceCreated productServceCreated;
+        private final ProductServiceUpdate productServiceUpdate;
 
-        public ProductController(ProductService productService) {
+        public ProductController(ProductService productService, ProductServiceCreated productServceCreated,
+                        ProductServiceUpdate productServiceUpdate) {
                 this.productService = productService;
+                this.productServceCreated = productServceCreated;
+                this.productServiceUpdate = productServiceUpdate;
         }
 
         @GetMapping()
@@ -66,7 +73,7 @@ public class ProductController {
                         @ApiResponse(responseCode = "422", description = "Invalid product data provided")
         })
         public ResponseEntity<ProductModelDto> createProduct(@Valid @RequestBody ProductModelDto productDTO) {
-                ProductModelDto createProduct = productService.createProduct(productDTO);
+                ProductModelDto createProduct = productServceCreated.createProductAndNotifyInventory(productDTO);
                 URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                                 .path("/{uuid}")
                                 .buildAndExpand(createProduct.getProductId())
@@ -83,7 +90,8 @@ public class ProductController {
         })
         public ResponseEntity<ProductModelDto> updateProduct(@PathVariable UUID uuid,
                         @Valid @RequestBody ProductModelDto productModelDTO) throws NotFoundException {
-                ProductModelDto updateProduct = productService.updateProduct(uuid, productModelDTO);
+                ProductModelDto updateProduct = productServiceUpdate.updateProductAndSyncInventory(uuid,
+                                productModelDTO);
                 return ResponseEntity.status(HttpStatus.OK).body(updateProduct);
         }
 
