@@ -18,6 +18,11 @@ public class QueueConfig {
     }
 
     @Bean
+    public Queue productRemoveQueue(){
+        return new Queue("product.remove.queue");
+    }
+
+    @Bean
     public Queue productDeletedQueue() {
         return new Queue("product.deleted.queue");
     }

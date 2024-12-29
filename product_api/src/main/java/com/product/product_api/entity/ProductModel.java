@@ -16,12 +16,12 @@ import jakarta.validation.constraints.Positive;
 @Entity(name = "product")
 @Table(name = "product_erp")
 public class ProductModel {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID productId;
 
-    @Column(name = "name_prodocut" ,nullable = false)
+    @Column(name = "name_prodocut", nullable = false)
     @NotNull(message = "Name cannot be Null")
     @NotEmpty(message = "Name cannot be empty")
     private String name;
@@ -35,7 +35,7 @@ public class ProductModel {
     @NotNull(message = "Price cannot be Null")
     @Positive(message = "The price cannot be zero")
     private BigDecimal price;
-    
+
     public ProductModel() {
     }
 
@@ -48,7 +48,7 @@ public class ProductModel {
     public ProductModel(String name, String description, double price, int stock) {
         this(name, description, BigDecimal.valueOf(price));
     }
-    
+
     public String getName() {
         return name;
     }

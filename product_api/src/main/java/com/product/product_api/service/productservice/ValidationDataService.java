@@ -1,4 +1,4 @@
-package com.product.product_api.service;
+package com.product.product_api.service.productservice;
 
 import java.util.Set;
 

@@ -2,25 +2,24 @@ package com.product.product_api.service.productservice;
 
 import org.springframework.stereotype.Service;
 
-import com.product.product_api.convert.ProductModelConvert;
-import com.product.product_api.dto.ProductModelDto;
+import com.product.product_api.convert.product.ProductModelConvert;
+import com.product.product_api.dto.request.RequestProductModelDto;
 import com.product.product_api.entity.ProductModel;
 import com.product.product_api.messaging.producer.InventoryProducer;
 import com.product.product_api.repository.ProductRepository;
-import com.product.product_api.service.ValidationDataService;
 
 import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
-public class ProductServiceCreated {
+public class CreatedProductService {
 
     private final ValidationDataService validationDataService;
     private final ProductRepository productRepository;
     private final InventoryProducer inventoryProducer;
     private final ProductModelConvert productModelConvert;
 
-    public ProductServiceCreated(ValidationDataService validationDataService, ProductRepository productRepository,
+    public CreatedProductService(ValidationDataService validationDataService, ProductRepository productRepository,
             InventoryProducer inventoryProducer, ProductModelConvert productModelConvert) {
         this.validationDataService = validationDataService;
         this.productRepository = productRepository;
@@ -28,7 +27,7 @@ public class ProductServiceCreated {
         this.productModelConvert = productModelConvert;
     }
 
-    public ProductModelDto createProductAndNotifyInventory(ProductModelDto productDTO) {
+    public RequestProductModelDto createProductAndNotifyInventory(RequestProductModelDto productDTO) {
         ProductModel productModel = productModelConvert.toProductModel(productDTO);
         validationDataService.validation(productModel);
         ProductModel createdProduct = productRepository.save(productModel);
@@ -36,7 +35,7 @@ public class ProductServiceCreated {
         return productModelConvert.toProductDTO(createdProduct, productDTO);
     }
 
-    private void notifyCreateInventoryService(ProductModel product, ProductModelDto productDTO) {
+    private void notifyCreateInventoryService(ProductModel product, RequestProductModelDto productDTO) {
         try {
             inventoryProducer.createProduct(product, productDTO);
         } catch (Exception ex) {

@@ -1,11 +1,11 @@
-package com.product.product_api.dto;
+package com.product.product_api.dto.request;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 import jakarta.validation.constraints.PositiveOrZero;
 
-public class ProductModelDto {
+public class RequestProductModelDto {
 
     private UUID productId;
     private String name;

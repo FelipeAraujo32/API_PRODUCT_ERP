@@ -1,4 +1,4 @@
-package com.product.product_api.dto;
+package com.product.product_api.dto.event;
 
 import java.util.UUID;
 

@@ -5,26 +5,25 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.product.product_api.convert.ProductModelConvert;
-import com.product.product_api.dto.ProductModelDto;
+import com.product.product_api.convert.product.ProductModelConvert;
+import com.product.product_api.dto.request.RequestProductModelDto;
 import com.product.product_api.entity.ProductModel;
 import com.product.product_api.messaging.producer.InventoryProducer;
 import com.product.product_api.repository.ProductRepository;
-import com.product.product_api.service.ValidationDataService;
 import com.product.product_api.service.business_exception.NotFoundException;
 
 import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
-public class ProductServiceUpdate {
+public class UpdateProductService {
 
     private final ValidationDataService validationDataService;
     private final ProductRepository productRepository;
     private final InventoryProducer inventoryProducer;
     private final ProductModelConvert productModelConvert;
 
-    public ProductServiceUpdate(ValidationDataService validationDataService, ProductRepository productRepository,
+    public UpdateProductService(ValidationDataService validationDataService, ProductRepository productRepository,
             InventoryProducer inventoryProducer, ProductModelConvert productModelConvert) {
         this.validationDataService = validationDataService;
         this.productRepository = productRepository;
@@ -32,7 +31,7 @@ public class ProductServiceUpdate {
         this.productModelConvert = productModelConvert;
     }
     
-    public ProductModelDto updateProductAndSyncInventory(UUID productId, ProductModelDto productDTO) {
+    public RequestProductModelDto updateProductAndSyncInventory(UUID productId, RequestProductModelDto productDTO) {
         ProductModel productModel = productModelConvert.toProductModel(productDTO);
         ProductModel byProductId = findExistingProduct(productId);
         updateProductFields(byProductId, productDTO);
@@ -42,7 +41,7 @@ public class ProductServiceUpdate {
         return productModelConvert.toProductDTO(updateProduct, productDTO);
     }
 
-    private void notifyUpdateInventoryService(ProductModel product, ProductModelDto productDTO) {
+    private void notifyUpdateInventoryService(ProductModel product, RequestProductModelDto productDTO) {
         try {
             inventoryProducer.updateProduct(product, productDTO);
         } catch (Exception ex) {
@@ -55,7 +54,7 @@ public class ProductServiceUpdate {
                 .orElseThrow(() -> new NotFoundException("Product not found for ID: " + productId));
     }
 
-    private void updateProductFields(ProductModel product, ProductModelDto productDTO) {
+    private void updateProductFields(ProductModel product, RequestProductModelDto productDTO) {
         Optional.ofNullable(productDTO.getName()).ifPresent(product::setName);
         Optional.ofNullable(productDTO.getDescription()).ifPresent(product::setDescription);
         Optional.ofNullable(productDTO.getPrice()).ifPresent(product::setPrice);
